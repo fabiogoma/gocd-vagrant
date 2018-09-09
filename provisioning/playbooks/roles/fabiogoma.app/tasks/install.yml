@@ -1,0 +1,25 @@
+---
+- name: Install docker
+  yum:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - docker
+    - python-pip
+  retries: 15
+  delay: 3
+  register: docker
+  until: docker is succeeded
+  failed_when: docker is failure
+
+- name: Install docker python modules
+  pip:
+    name: docker-py
+    extra_args: --user
+  become: true
+  become_user: vagrant
+  retries: 15
+  delay: 3
+  register: docker_py
+  until: docker_py is succeeded
+  failed_when: docker_py is failure

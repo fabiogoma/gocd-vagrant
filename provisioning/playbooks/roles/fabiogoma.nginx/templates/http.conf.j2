@@ -1,0 +1,16 @@
+server {
+  # Redirect any http requests to https
+  listen         80;
+  server_name    {{ url }};
+  return 301     https://{{ url }}$request_uri;
+
+  error_page   500 502 503 504  /50x.html;
+  location = /50x.html {
+      root   /usr/share/nginx/html;
+  }
+}
+
+map $http_upgrade $connection_upgrade {
+  default upgrade;
+  '' close;
+}

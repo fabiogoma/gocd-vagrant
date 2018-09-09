@@ -1,0 +1,217 @@
+---
+- name: Define default URL
+  set_fact:
+    url: "{{ inventory_hostname }}.local"
+
+- name: Set default limits for GoCD
+  pam_limits:
+    domain: go
+    limit_type: "{{ item }}"
+    limit_item: nofile
+    value: 20000
+  with_items:
+    - soft
+    - hard
+
+- name: Encrypt GitHub ClientId
+  uri:
+    url: https://gocd.local/go/api/admin/encrypt
+    method: POST
+    body:
+      value: "{{ ClientId }}"
+    body_format: json
+    return_content: true
+    validate_certs: false
+    headers:
+      Accept: 'application/vnd.go.cd.v1+json'
+      Content-Type: 'application/json'
+  register: EncryptedClientId
+  ignore_errors: true
+
+- name: Encrypt GitHub ClientSecret
+  uri:
+    url: https://gocd.local/go/api/admin/encrypt
+    method: POST
+    body:
+      value: "{{ ClientSecret }}"
+    body_format: json
+    return_content: true
+    validate_certs: false
+    headers:
+      Accept: 'application/vnd.go.cd.v1+json'
+      Content-Type: 'application/json'
+  register: EncryptedClientSecret
+  ignore_errors: true
+
+- name: Encrypt GitHub PersonalAccessToken
+  uri:
+    url: https://gocd.local/go/api/admin/encrypt
+    method: POST
+    body:
+      value: "{{ PersonalAccessToken }}"  
+    body_format: json
+    return_content: true
+    validate_certs: false
+    headers:
+      Accept: 'application/vnd.go.cd.v1+json'
+      Content-Type: 'application/json'
+  register: EncryptedPersonalAccessToken
+  ignore_errors: true
+
+- name: Default startup configuration
+  copy:
+    src: "{{ item }}"
+    dest: /etc/default/{{ item }}
+    owner: root
+    group: go
+    mode: 0640
+  with_items:
+    - go-server
+    - go-agent
+
+- name: Add URL attributes
+  xml:
+    pretty_print: true
+    path: /etc/go/cruise-config.xml
+    xpath: /cruise/server
+    attribute: "{{ item.attribute }}"
+    value: "{{ item.value }}"
+  with_items:
+    - { attribute: siteUrl, value: "https://{{ url }}" }
+    - { attribute: secureSiteUrl, value: "https://{{ url }}" }
+
+- name: Add GitHub OAuth attributes
+  xml:
+    pretty_print: true
+    path: /etc/go/cruise-config.xml
+    xpath: /cruise/server/security/authConfigs/authConfig
+    attribute: "{{ item.attribute }}"
+    value: "{{ item.value }}"
+  with_items:
+    - { attribute: id, value: GitHub }
+    - { attribute: pluginId, value: cd.go.authorization.github }
+
+- name: Configure GitHub authentication tokens
+  xml:
+    pretty_print: true
+    path: /etc/go/cruise-config.xml
+    xpath: /cruise/server/security/authConfigs/authConfig
+    set_children:
+      - property:
+          _:
+            - key: ClientId
+            - encryptedValue: "{{ EncryptedClientId['json']['encrypted_value'] }}"
+      - property:
+          _:
+            - key: ClientSecret
+            - encryptedValue: "{{ EncryptedClientSecret['json']['encrypted_value'] }}"
+      - property:
+          _:
+            - key: AuthenticateWith
+            - value: "GitHub"
+      - property:
+          _:
+            - key: GitHubEnterpriseUrl
+      - property:
+          _:
+            - key: AllowedOrganizations
+      - property:
+          _:
+            - key: AuthorizeUsing
+            - value: "PersonalAccessToken"
+      - property:
+          _:
+            - key: PersonalAccessToken
+            - encryptedValue: "{{ EncryptedPersonalAccessToken['json']['encrypted_value'] }}"
+  when: (EncryptedClientId is succeeded) and (EncryptedClientSecret is succeeded) and (EncryptedPersonalAccessToken is succeeded)
+
+- name: Add YAML repo attributes
+  xml:
+    pretty_print: true
+    path: /etc/go/cruise-config.xml
+    xpath: /cruise/config-repos/config-repo
+    attribute: "{{ item.attribute }}"
+    value: "{{ item.value }}"
+  with_items:
+    - { attribute: id, value: gocd-yaml-config }
+    - { attribute: pluginId, value: yaml.config.plugin }
+
+- name: Remove all agents
+  xml:
+    path: /etc/go/cruise-config.xml
+    xpath: /cruise/agents
+    state: absent
+
+- name: Configure pipeline YAML repo
+  xml:
+    pretty_print: true
+    path: /etc/go/cruise-config.xml
+    xpath: /cruise/config-repos/config-repo
+    set_children:
+      - git:
+          url: https://github.com/fabiogoma/gocd-pipelines.git
+
+- name: Restart GoCD components
+  systemd:
+    name: "{{ item }}"
+    state: restarted
+    enabled: true
+  with_items:
+    - go-server
+    - go-agent
+
+- name: Ensure GoCD components are up
+  systemd:
+    name: "{{ item }}"
+    state: started
+    enabled: true
+  with_items:
+    - go-server
+    - go-agent
+
+- name: Create go directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: go
+    group: go
+  with_items:
+    - /var/go
+    - /home/go
+
+- name: Find vagrant ssh keys
+  find:
+    paths: "{{ role_path }}/files/machines/"
+    patterns: 'private_key'
+    recurse: true
+  delegate_to: localhost
+  register: private_keys
+
+- name: Create all needed folders
+  file:
+    path: "/home/go/keys/{{ item.path.split('machines')[1] | dirname }}"
+    state: directory
+    owner: go
+    group: go
+  with_items:
+    - "{{ private_keys.files }}"
+
+- name: Transfer vagrant ssh keys
+  copy:
+    src: "{{ item.path }}"
+    dest: "/home/go/keys/{{ item.path.split('machines')[1] }}"
+    owner: go
+    group: go
+    mode: 0400
+    directory_mode: true
+  with_items:
+    - "{{ private_keys.files }}"
+
+- name: Wait for target hosts to become available
+  wait_for:
+    host: "{{ item }}"
+    port: 22
+  with_items:
+    - app1.local
+    - app2.local
+    - nginx.local

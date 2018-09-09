@@ -1,0 +1,23 @@
+---
+- name: Add default docker group
+  group:
+    name: docker
+    state: present
+
+- name: Add vagrant user to docker group
+  user:
+    name: vagrant
+    groups: docker
+    append: true
+  register: result
+
+- name: Restart docker daemon
+  systemd:
+    name: docker
+    state: restarted
+  when: result is changed
+
+- name: Ensure docker is running
+  systemd:
+    name: docker
+    state: started

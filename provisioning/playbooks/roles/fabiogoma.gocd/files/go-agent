@@ -1,0 +1,4 @@
+GO_SERVER_URL=https://127.0.0.1:8154/go
+AGENT_WORK_DIR=/var/lib/${SERVICE_NAME:-go-agent}
+AGENT_MEM="1g"
+AGENT_MAX_MEM="1g"

@@ -1,0 +1,25 @@
+---
+- name: Provisioning demo hosts
+  hosts: all
+  become: true
+  gather_facts: no
+  
+  tasks:
+    - name: Include common role
+      include_role:
+        name: fabiogoma.common  
+
+    - name: Include app role
+      include_role:
+        name: fabiogoma.app
+      when: inventory_hostname is search("app")
+
+    - name: Include NGINX role
+      include_role:
+        name: fabiogoma.nginx
+      when: inventory_hostname is search("nginx") or inventory_hostname is search("gocd")
+    
+    - name: Include GoCD role
+      include_role:
+        name: fabiogoma.gocd
+      when: inventory_hostname is search("gocd")

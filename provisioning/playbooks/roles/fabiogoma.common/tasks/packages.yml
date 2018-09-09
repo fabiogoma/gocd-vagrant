@@ -1,0 +1,69 @@
+---
+- name: Disable IPV6
+  sysctl:
+    name: net.ipv6.conf.all.disable_ipv6
+    value: 1
+    sysctl_set: true
+
+- name: Install EPEL repo
+  yum: 
+    name: epel-release
+    state: present
+  retries: 15
+  delay: 3
+  register: epel
+  until: epel is succeeded
+  failed_when: epel is failure
+
+- name: Install basic packages
+  yum: 
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - nss-mdns
+    - net-tools
+    - telnet
+    - tcpdump
+    - lsof
+    - strace
+    - wget
+    - mlocate
+    - setroubleshoot
+    - setroubleshoot-server
+    - policycoreutils-devel
+  retries: 15
+  delay: 3
+  register: basic
+  until: basic is succeeded
+  failed_when: basic is failure
+
+- name: Update all packages
+  yum: 
+    name: "*"
+    state: latest
+  retries: 15
+  delay: 3
+  register: update
+  until: update is succeeded
+  failed_when: update is failure
+
+- name: Configure mDNS
+  lineinfile:
+    path: /etc/avahi/avahi-daemon.conf
+    regexp: '^#allow-interfaces=eth0'
+    line: 'allow-interfaces=eth0'
+    state: present
+    backrefs: true
+
+- name: Rebooting ...
+  command: "sleep 5 && reboot"
+  async: 1
+  poll: 0
+  register: rebooting
+  when: update is changed
+
+- name: Wait for rebooted server to come back on-line
+  wait_for_connection:
+    delay: 20
+    timeout: 300
+  when: rebooting is changed

@@ -1,0 +1,16 @@
+---
+- name: Generate NGINX self-signed certificate
+  hosts: localhost
+  connection: local
+  become: true
+  gather_facts: no
+
+  tasks:
+    - name: Include certificate role
+      include_role:
+        name: fabiogoma.certificate
+      with_items:
+        - nginx.local
+        - gocd.local
+      loop_control:
+        loop_var: certificate_hostnames

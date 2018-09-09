@@ -1,0 +1,37 @@
+---
+- name: Set NGINX hostname
+  hostname:
+    name: "{{ inventory_hostname }}"
+  
+- name: Enable http/https access
+  firewalld:
+    service: "{{ item }}"
+    permanent: true
+    state: enabled
+  with_items:
+    - http
+    - https
+  register: firewall
+
+- name: Restart firewalld service if necessary
+  systemd:
+    state: restarted
+    name: firewalld
+  when: firewall.changed
+
+- name: Ensure firewalld is up
+  systemd:
+    state: started
+    name: firewalld
+
+- name: Enable mDNS service
+  systemd:
+      name: avahi-daemon
+      enabled: true
+      state: started
+
+- name: Set httpd_can_network_connect flag on and keep it persistent across reboots
+  seboolean:
+    name: httpd_can_network_connect
+    state: true
+    persistent: true

@@ -1,0 +1,21 @@
+---
+- name: Set app hostname
+  hostname:
+    name: "{{ inventory_hostname }}"
+
+- name: Enable 8080/tcp access
+  firewalld:
+    port: 8080/tcp
+    permanent: true
+    state: enabled
+
+- name: Start firewalld service
+  systemd:
+    state: restarted
+    name: firewalld
+
+- name: Start mDNS service
+  systemd:
+      name: avahi-daemon
+      enabled: true
+      state: started

@@ -1,0 +1,16 @@
+---
+- name: Set SELinux to enforcing
+  selinux:
+    policy: targeted
+    state: enforcing
+
+- name: Enable mdns access
+  firewalld:
+    service: mdns
+    permanent: true
+    state: enabled
+
+- name: Reload firewalld
+  systemd:
+    state: started
+    name: firewalld

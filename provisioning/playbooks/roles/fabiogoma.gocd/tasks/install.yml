@@ -1,0 +1,66 @@
+---
+- name: Install OpenJDK, ansible, git and other dependecies
+  yum:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - java-1.8.0-openjdk
+    - java-1.8.0-openjdk-devel
+    - git
+    - yamllint
+    - ansible
+    - libselinux-python
+  retries: 15
+  delay: 3
+  register: java_install
+  until: java_install is succeeded
+  failed_when: java_install is failure
+
+- name: Set facts for GoCD binaries
+  set_fact:
+    gocd:
+      server: https://download.gocd.org/binaries/18.7.0-7121/rpm/go-server-18.7.0-7121.noarch.rpm
+      client: https://download.gocd.org/binaries/18.7.0-7121/rpm/go-agent-18.7.0-7121.noarch.rpm
+    github:
+      oauth_plugin: https://github.com/gocd-contrib/github-oauth-authorization-plugin/releases/download/2.2.0/github-oauth-authorization-plugin-2.2.0-21.jar
+    chef:
+      InSpec: https://packages.chef.io/files/stable/inspec/2.2.78/el/7/inspec-2.2.78-1.el7.x86_64.rpm
+
+- name: Install GoCD server and agent + Chef InSpec
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - "{{ gocd.server }}"
+    - "{{ gocd.client }}"
+    - "{{ chef.InSpec }}"
+  retries: 15
+  delay: 3
+  register: gocd_install
+  until: gocd_install is succeeded
+  failed_when: gocd_install is failure
+
+- name: Start GoCD components
+  systemd:
+    name: "{{ item }}"
+    state: started
+  with_items:
+    - go-server
+    - go-agent
+
+- name: Install GitHub OAuth plugin
+  get_url:
+    url: "{{ github.oauth_plugin }}"
+    dest: "/var/lib/go-server/plugins/external/{{ github.oauth_plugin | basename }}"
+  retries: 15
+  delay: 3
+  register: github_plugin
+  until: github_plugin is succeeded
+  failed_when: github_plugin is failure
+
+- name: Restart GoCD server to load plugin
+  systemd:
+    name: go-server
+    state: restarted
+  when: github_plugin is changed
+

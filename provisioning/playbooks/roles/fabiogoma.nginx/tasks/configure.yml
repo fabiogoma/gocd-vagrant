@@ -1,0 +1,53 @@
+---
+- name: Define default URL
+  set_fact:
+    url: "{{ inventory_hostname }}.local"
+
+- name: Create default NGINX certificate folder
+  file:
+    path: /etc/ssl/nginx
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Copy certificate files
+  copy:
+    src: "{{ item }}"
+    dest: /etc/ssl/nginx/{{ item | basename }}
+  with_items:
+    - "../fabiogoma.certificate/files/{{ url }}.crt"
+    - "../fabiogoma.certificate/files/{{ url }}.csr"
+    - "../fabiogoma.certificate/files/{{ url }}.key"
+
+- name: Remove default configuration
+  file:
+    path: /etc/nginx/conf.d/default.conf
+    state: absent
+
+- name: Create default http/https configuration file
+  template:
+    src: "{{ item }}"
+    dest: "/etc/nginx/conf.d/{{ item.split('.j2')[0] }}"
+    owner: root
+    group: root
+    mode: 0640
+  with_items:
+    - http.conf.j2
+    - "{{ url }}.conf.j2"
+  notify:
+    - Restart NGINX
+
+- name: Wait for backend to become available
+  wait_for:
+    host: "{{ item }}"
+    port: 22
+  with_items:
+    - app1.local
+    - app2.local
+  when: inventory_hostname is search("nginx")
+
+- name: Ensure NGINX is up
+  systemd:
+    name: nginx
+    state: started

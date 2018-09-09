@@ -1,0 +1,33 @@
+---
+- name: Generate private key
+  openssl_privatekey:
+    path: "{{ role_path }}/files/{{ item }}.key"
+    size: 2048
+  delegate_to: localhost
+  with_items:
+    - "{{ certificate_hostnames }}"
+
+- name: Generate certificate request
+  openssl_csr:
+    path: "{{ role_path }}/files/{{ item }}.csr"
+    privatekey_path: "{{ role_path }}/files/{{ item }}.key"
+    country_name: NL
+    state_or_province_name: North Holland
+    locality_name: Amsterdam
+    organization_name: ING
+    organizational_unit_name: GMTT
+    email_address: fabio.goncalves.martins@ing.com
+    common_name: "{{ item }}"
+  delegate_to: localhost
+  with_items:
+    - "{{ certificate_hostnames }}"
+
+- name: Generate a Self Signed OpenSSL certificate
+  openssl_certificate:
+    path: "{{ role_path }}/files/{{ item }}.crt"
+    privatekey_path: "{{ role_path }}/files/{{ item }}.key"
+    csr_path: "{{ role_path }}/files/{{ item }}.csr"
+    provider: selfsigned
+  delegate_to: localhost
+  with_items:
+    - "{{ certificate_hostnames }}"

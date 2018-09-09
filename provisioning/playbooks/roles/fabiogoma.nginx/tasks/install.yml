@@ -1,0 +1,15 @@
+---
+- name: Define NGINX url variable
+  set_fact:
+    nginx_url: http://nginx.org/packages/rhel/7/x86_64/RPMS/nginx-1.14.0-1.el7_4.ngx.x86_64.rpm
+
+- name: Install NGINX from official website
+  yum:
+    name: "{{ nginx_url }}"
+    state: present
+  retries: 5
+  delay: 3
+  register: result
+  until: result is succeeded
+  failed_when: result is failure
+

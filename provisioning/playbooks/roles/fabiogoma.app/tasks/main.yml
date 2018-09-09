@@ -1,0 +1,4 @@
+---
+- include_tasks: security.yml
+- include_tasks: install.yml
+- include_tasks: configure.yml
