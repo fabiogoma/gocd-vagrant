@@ -1,10 +1,10 @@
 # GoCD
 
-This project aims to show a quick demo of an application deployment with zero downtime, by leveraging the usage of [GoCD|https://www.gocd.org/] pipelines, combined with [Ansible|https://www.ansible.com/] playbooks.
+This project aims to show a quick demo of an application deployment with zero downtime, by leveraging the usage of [GoCD](https://www.gocd.org/) pipelines, combined with [Ansible](https://www.ansible.com/) playbooks.
 
 ## Usage
 
-This demo is a combination of two projects, [gocd-vagrant|https://github.com/fabiogoma/gocd-vagrant] and [gocd-pipelines|https://github.com/fabiogoma/gocd-pipelines].
+This demo is a combination of two projects, [gocd-vagrant](https://github.com/fabiogoma/gocd-vagrant) and [gocd-pipelines](https://github.com/fabiogoma/gocd-pipelines).
 
 > NOTICE: For the gocd-pipelines, no changes are required. The project will be checked out during the pipeline execution.
 
@@ -60,7 +60,7 @@ $
 
 ### GoCD authentication integrated with GitHub account
 
-In order to access GoCD web console, this demo will setup your GoCD installation to support GitHub OAuth authentication. You need to follow the GitHub recomendation to generate all needed tokens (ClientID, ClientSecret and PersonalAccessToken), you will find the official GitHub documentation [here|https://github.com/gocd-contrib/github-oauth-authorization-plugin/blob/master/INSTALL.md]
+In order to access GoCD web console, this demo will setup your GoCD installation to support GitHub OAuth authentication. You need to follow the GitHub recomendation to generate all needed tokens (ClientID, ClientSecret and PersonalAccessToken), you will find the official GitHub documentation [here](https://github.com/gocd-contrib/github-oauth-authorization-plugin/blob/master/INSTALL.md)
 
 Remember to NEVER share or store those tokens unencrypted, here I'll give an overview about file encryption using ansible-vault.
 
