@@ -10,6 +10,14 @@ I'm assuming you run GNU/Linux on your desktop (I'm currently running this demo 
   <img src="images/logos.png">
 </p>
 
+## Topology
+
+The below topology, humbly describes the basic concept behind this demo.
+
+<p align="center">
+  <img src="images/topology.png">
+</p>
+
 ## Usage
 
 This demo is a combination of two projects, [gocd-vagrant](https://github.com/fabiogoma/gocd-vagrant) and [gocd-pipelines](https://github.com/fabiogoma/gocd-pipelines).
