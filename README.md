@@ -2,6 +2,14 @@
 
 This project aims to show a quick demo of an application deployment with zero downtime, by leveraging the usage of [GoCD](https://www.gocd.org/) pipelines, combined with [Ansible](https://www.ansible.com/) playbooks.
 
+## Tools used on this demo
+
+I'm assuming you run GNU/Linux on your desktop (I'm currently running this demo on Fedora 28), have installed and configured [nss-mdns](https://github.com/lathiat/nss-mdns), also have installed [vagrant](https://www.vagrantup.com/), [ansible](https://www.ansible.com/) and [libvirt](https://libvirt.org/). Other tools will be downloaded, installed and configured automatically by ansible playbooks.
+
+<p align="center">
+  <img src="images/logos.png">
+</p>
+
 ## Usage
 
 This demo is a combination of two projects, [gocd-vagrant](https://github.com/fabiogoma/gocd-vagrant) and [gocd-pipelines](https://github.com/fabiogoma/gocd-pipelines).
