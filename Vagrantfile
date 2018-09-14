@@ -8,11 +8,19 @@ Vagrant.configure('2') do |config|
   config.vm.provider :libvirt do |libvirt|
     libvirt.driver = 'kvm'
     libvirt.cpus = 2
-    libvirt.memory = '4096'
   end
 
   hosts.each do |hostname|
     config.vm.define hostname do |node|
+      if hostname == 'gocd'
+        config.vm.provider :libvirt do |libvirt|
+          libvirt.memory = '4096'
+        end
+      else
+        config.vm.provider :libvirt do |libvirt|
+          libvirt.memory = '2048'
+        end
+      end
       node.vm.provision 'ansible' do |ansible|
         ansible.limit = hostname
         ansible.compatibility_mode = '2.0'
