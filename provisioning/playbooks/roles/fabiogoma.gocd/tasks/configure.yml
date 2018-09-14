@@ -13,6 +13,10 @@
     - soft
     - hard
 
+- name: Wait for 3 minutes
+  pause:
+    minutes: 3
+
 - name: Encrypt GitHub ClientId
   uri:
     url: https://gocd.local/go/api/admin/encrypt
@@ -125,6 +129,12 @@
             - encryptedValue: "{{ EncryptedPersonalAccessToken['json']['encrypted_value'] }}"
   when: (EncryptedClientId is succeeded) and (EncryptedClientSecret is succeeded) and (EncryptedPersonalAccessToken is succeeded)
 
+- name: Remove all agents
+  xml:
+    path: /etc/go/cruise-config.xml
+    xpath: /cruise/agents
+    state: absent
+
 - name: Add YAML repo attributes
   xml:
     pretty_print: true
@@ -136,12 +146,6 @@
     - { attribute: id, value: gocd-yaml-config }
     - { attribute: pluginId, value: yaml.config.plugin }
 
-- name: Remove all agents
-  xml:
-    path: /etc/go/cruise-config.xml
-    xpath: /cruise/agents
-    state: absent
-
 - name: Configure pipeline YAML repo
   xml:
     pretty_print: true
@@ -150,6 +154,10 @@
     set_children:
       - git:
           url: https://github.com/fabiogoma/gocd-pipelines.git
+
+- name: Wait for 3 minutes
+  pause:
+    minutes: 3
 
 - name: Restart GoCD components
   systemd:
@@ -168,16 +176,6 @@
   with_items:
     - go-server
     - go-agent
-
-- name: Create go directories
-  file:
-    path: "{{ item }}"
-    state: directory
-    owner: go
-    group: go
-  with_items:
-    - /var/go
-    - /home/go
 
 - name: Find vagrant ssh keys
   find:
