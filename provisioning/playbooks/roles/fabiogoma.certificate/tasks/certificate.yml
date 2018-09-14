@@ -1,4 +1,9 @@
 ---
+- name: Generate default certificate folder
+  file:
+    path: "{{ role_path }}/files"
+    state: directory
+
 - name: Generate private key
   openssl_privatekey:
     path: "{{ role_path }}/files/{{ item }}.key"
@@ -31,3 +36,10 @@
   delegate_to: localhost
   with_items:
     - "{{ certificate_hostnames }}"
+
+- name: Enforce read permissions
+  file:
+    path: "{{ role_path }}/files/{{ item }}.key"
+    mode: 0644
+  with_items:
+    - - "{{ certificate_hostnames }}"
