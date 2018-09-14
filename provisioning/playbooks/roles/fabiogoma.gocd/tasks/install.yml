@@ -40,6 +40,16 @@
   until: gocd_install is succeeded
   failed_when: gocd_install is failure
 
+- name: Create go directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: go
+    group: go
+  with_items:
+    - /var/go
+    - /home/go
+
 - name: Start GoCD components
   systemd:
     name: "{{ item }}"
