@@ -134,6 +134,7 @@
     path: /etc/go/cruise-config.xml
     xpath: /cruise/agents
     state: absent
+  register: remove_agent
 
 - name: Add YAML repo attributes
   xml:
@@ -145,6 +146,7 @@
   with_items:
     - { attribute: id, value: gocd-yaml-config }
     - { attribute: pluginId, value: yaml.config.plugin }
+  when: remove_agent is succeeded
 
 - name: Configure pipeline YAML repo
   xml:
